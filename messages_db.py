@@ -26,6 +26,7 @@ def create_table_if_not_exists():
                     id SERIAL PRIMARY KEY,
                     message_question VARCHAR,
                     message_content VARCHAR,
+                    chat_id BIGINT,
                     role VARCHAR,
                     created_date TIMESTAMP
                 );
