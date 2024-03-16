@@ -9,6 +9,13 @@ from messages_db import create_table_if_not_exists
 from telegram import Bot, Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext
 from telegram.ext.filters import Filters
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+# Crea una instancia del logger
+logger = logging.getLogger(__name__)
+#logger.info("")
 
 create_table_if_not_exists()
 
@@ -17,30 +24,32 @@ def get_db_connection():
     return psycopg2.connect(os.environ["DATABASE_URL"], cursor_factory=RealDictCursor)
 
 
-def insert_message(message_question, message_content, role):
+def insert_message(message_question, message_content, chat_id, role):
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO messages (message_question, message_content, role, created_date)
-                    VALUES (%s, %s, %s, NOW())
+                    INSERT INTO messages (message_question, message_content, chat_id, role, created_date)
+                    VALUES (%s, %s, %s, %s, NOW())
                 """,
-                    (message_question, message_content, role),
+                    (message_question, message_content, chat_id, role),
                 )
     except Exception as e:
         print(f"Error al insertar mensaje: {e}")
 
 
-def get_session_messages():
+def get_session_messages(chat_id):
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT message_question, message_content, role FROM messages
+                    SELECT message_question, message_content, chat_id, role FROM messages
+                    WHERE chat_id = %s
                     ORDER BY created_date ASC
                     """,
+                    (chat_id,),
                 )
                 messages = cur.fetchall()
                 return messages
@@ -60,9 +69,10 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 class Query(BaseModel):
     ask: str
 
-def question(message_question):
+def question(message_question, chat_id):
     if message_question:
         messages = get_session_messages(
+            chat_id
             
         )  # Obtiene todos los mensajes de la sesión
 
@@ -97,14 +107,14 @@ def question(message_question):
             model="gpt-3.5-turbo",
             messages=context_messages,
         )
-
+        
 
         # Obtiene el mensaje de respuesta de la API GPT
         response_message = completion.choices[0].message
 
     
         # Inserta el mensaje de respuesta en la base de datos
-        insert_message(message_question, response_message.content, "user")
+        insert_message(message_question, response_message.content, chat_id, "user")
 
         # Retorna la respuesta
         return {"message": response_message.content}
@@ -113,15 +123,20 @@ def handle_text(update: Update, context: CallbackContext):
 
     message = update.message.text
     chat_id = update.message.chat_id
-    if message:
 
+    reply_text = "No se recibió ningún mensaje válido."
+
+    if message:
         try:
-            reply = question(message)
-        except:
-            reply = "Error llamando al servicio de ChatCompletion"
-            print(reply)
-        
-    context.bot.send_message(chat_id=chat_id, text=reply['message'])
+            # Suponiendo que question devuelve un diccionario con una clave 'message'
+            reply_dict = question(message, chat_id)
+            reply_text = reply_dict['message']
+        except Exception as e:
+            logger.error(f"Error llamando al servicio de ChatCompletion: {e}")
+            reply_text = "Error llamando al servicio de ChatCompletion"
+
+    # Envía reply_text como respuesta
+    context.bot.send_message(chat_id=chat_id, text=reply_text)
 
 def main():
     updater = Updater(token=TELEGRAM_TOKEN, use_context=True)
