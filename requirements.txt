@@ -1,0 +1,8 @@
+openai
+psycopg2-binary
+uvicorn
+fastapi
+pydantic
+load_dotenv
+python-telegram-bot==12.8
+python-dotenv
