@@ -86,9 +86,17 @@ def question(message_question, chat_id):
 
         # Agrega todos los mensajes anteriores al contexto
         for msg in messages:
+
             context_messages.append(
                 {
-                    "role": "user",  # Usa 'role' para determinar el emisor del mensaje
+                    "role": "user",
+                    "content": msg["message_question"],
+                }
+            )
+
+            context_messages.append(
+                {
+                    "role": "assistant",  # Usa 'role' para determinar el emisor del mensaje
                     "content": msg["message_content"],  # Asegúrate de usar 'content'
                 }
             )
@@ -97,17 +105,17 @@ def question(message_question, chat_id):
         # Añade la pregunta actual al contexto fuera del bucle
         context_messages.append(
             {
-                "role": "assistant",
+                "role": "user",
                 "content": message_question,
             }
         )
+        logger.info(context_messages)
 
         # Envía la solicitud a la API GPT con el contexto completo
         completion = GPT_TOKEN.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4-0125-preview",
             messages=context_messages,
         )
-        
 
         # Obtiene el mensaje de respuesta de la API GPT
         response_message = completion.choices[0].message
