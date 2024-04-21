@@ -1,3 +1,5 @@
 .env
 gpt
 test.py
+myenv
+__pycache__
