@@ -1,5 +1,4 @@
-# This repo aims to store the directories and files that I need to perform the tasks that Facundo assigns to me.
-# Task 1: Create an openai assistant and then make a fastapi API that allows you to chat with this assistant and ask him things from these documents.
+
 
 
 
