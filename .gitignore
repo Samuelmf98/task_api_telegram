@@ -2,5 +2,9 @@
 test.py
 venv
 mylib/__pycache__
+<<<<<<< HEAD
 __pycache__
 my_database.db
+=======
+__pycache__
+>>>>>>> 538ca90d445fac6630acc44857d357765e4d5566
