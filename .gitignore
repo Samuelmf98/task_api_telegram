@@ -1,5 +1,5 @@
 .env
-gpt
 test.py
-myenv
+venv
+mylib/__pycache__
 __pycache__
